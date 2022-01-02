@@ -65,6 +65,9 @@ def resize_and_center_crop(image, size):
 
 
 def main():
+    # prompts = [text]
+    # init
+    # size is fixed
     p = argparse.ArgumentParser(description=__doc__,
                                 formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     p.add_argument('prompts', type=str, default=[], nargs='*',
@@ -124,7 +127,7 @@ def main():
     normalize = transforms.Normalize(mean=[0.48145466, 0.4578275, 0.40821073],
                                      std=[0.26862954, 0.26130258, 0.27577711])
     make_cutouts = MakeCutouts(clip_model.visual.input_resolution, args.cutn, args.cut_pow)
-
+    # all this stuff can all be cached but i don't have to do that yet
     if args.init:
         init = Image.open(utils.fetch(args.init)).convert('RGB')
         init = resize_and_center_crop(init, (side_x, side_y))
