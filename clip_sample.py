@@ -63,6 +63,28 @@ def resize_and_center_crop(image, size):
     image = image.resize((int(fac * image.size[0]), int(fac * image.size[1])), Image.LANCZOS)
     return TF.center_crop(image, size[::-1])
 
+def mk_slug(text: Union[str, list[str]]) -> str:
+    text = "".join(text).encode("ascii", errors='ignore').decode()
+    return "".join(c if (c.isalnum() or c in "._") else "_" for c in text)[:200] + hex(hash(text))[-4:]
+
+class BetterNamespace(argparse.Namespace):
+    "this is just for compatibility with argparse.Namespace, but with updates"
+    def __init__(self, **kwargs: Any) -> None:
+        self.mapping = kwargs
+
+    def __getattr__(self, attribute: str) -> Any:
+        if attribute == "prompts" and "text" in self.mapping:
+            return [self.mapping["text"]]
+        return self.mapping[attribute]
+
+    def with_update(self, other_dict: "dict[str, Any]") -> "BetterNamespace":
+        new_ns = BetterNamespace(**self.mapping)
+        new_ns.mapping.update(other_dict)
+        return new_ns
+
+    def __repr__(self) -> str:
+        return repr(self.mapping)
+
 
 def main():
     # prompts = [text]
@@ -103,7 +125,9 @@ def main():
     p.add_argument('--steps', type=int, default=1000,
                    help='the number of timesteps')
     args = p.parse_args()
+    return generate(args)
 
+def generate(args: "BetterNamespace") -> None:
     if args.device:
         device = torch.device(args.device)
     else:
